@@ -56,31 +56,26 @@ begin
 	 g<= (others => '0');
 	 b<= (others => '0');
     if blank='0' then
- 	   if (column > to_unsigned(3*width/12, 10)-15 and column < to_unsigned(3*width/12, 10)+15 and row <= to_unsigned(3*height/4, 10) and row >= to_unsigned(height/4, 10)) or--left side A
-		   (column > to_unsigned(5*width/12, 10)-15 and column < to_unsigned(5*width/12, 10)+15 and row <= to_unsigned(3*height/4, 10) and row >= to_unsigned(height/4, 10)) or--right side A
-		   (column > to_unsigned(7*width/12, 10)-15 and column < to_unsigned(7*width/12, 10)+15 and row <= to_unsigned(3*height/4, 10) and row >= to_unsigned(height/4, 10)) or--vertical F
-		   (column > to_unsigned(3*width/12, 10)-15 and column < to_unsigned(5*width/12, 10)+15 and row <= to_unsigned(height/4, 10)+30 and row >= to_unsigned(height/4, 10))or--top A
-		   (column > to_unsigned(7*width/12, 10)-15 and column < to_unsigned(9*width/12, 10)+15 and row <= to_unsigned(height/4, 10)+30 and row >= to_unsigned(height/4, 10))or--top F
-		   (column > to_unsigned(3*width/12, 10)-15 and column < to_unsigned(5*width/12, 10)+15 and row <= to_unsigned(height/2, 10)+30 and row >= to_unsigned(height/2, 10))or--middle A
-		   (column > to_unsigned(7*width/12, 10)-15 and column < to_unsigned(8*width/12, 10)+15 and row <= to_unsigned(height/2, 10)+30 and row >= to_unsigned(height/2, 10))then--middle F
+ 	   if (column >= to_unsigned(3*width/12, 10)-15 and column <= to_unsigned(3*width/12, 10)+15 and row <= to_unsigned(3*height/4, 10) and row >= to_unsigned(height/4, 10)) or--left side A
+		   (column >= to_unsigned(5*width/12, 10)-15 and column <= to_unsigned(5*width/12, 10)+15 and row <= to_unsigned(3*height/4, 10) and row >= to_unsigned(height/4, 10)) or--right side A
+		   (column >= to_unsigned(7*width/12, 10)-15 and column <= to_unsigned(7*width/12, 10)+15 and row <= to_unsigned(3*height/4, 10) and row >= to_unsigned(height/4, 10)) or--vertical F
+		   (column >= to_unsigned(3*width/12, 10)-15 and column <= to_unsigned(5*width/12, 10)+15 and row <= to_unsigned(height/4, 10)+30 and row >= to_unsigned(height/4, 10))or--top A
+		   (column >= to_unsigned(7*width/12, 10)-15 and column <= to_unsigned(9*width/12, 10)+15 and row <= to_unsigned(height/4, 10)+30 and row >= to_unsigned(height/4, 10))or--top F
+		   (column >= to_unsigned(3*width/12, 10)-15 and column <= to_unsigned(5*width/12, 10)+15 and row <= to_unsigned(height/2, 10)+30 and row >= to_unsigned(height/2, 10))or--middle A
+		   (column >= to_unsigned(7*width/12, 10)-15 and column <= to_unsigned(8*width/12, 10)+15 and row <= to_unsigned(height/2, 10)+30 and row >= to_unsigned(height/2, 10))then--middle F
 		  r<= (others => '0');
 		  g<= "10001000";
 		  b<= (others => '1');
-	   elsif	(column > to_unsigned(2*width/80, 10)-10 and column < to_unsigned(3*width/80, 10)+10 and row <= paddle_y+40 and row >= paddle_y-40) then
+	   elsif	(column >= to_unsigned(2*width/80, 10)-to_unsigned(paddle_width/2, 10) and column <= to_unsigned(3*width/80, 10)+to_unsigned(paddle_width/2, 10) and row <= paddle_y+to_unsigned(paddle_height/2, 10) and row >= paddle_y-to_unsigned(paddle_height/2, 10)) then
 		  r <= (others => '0');
 		  g <= (others => '1');
 		  b <= (others => '0');
-		else  
-	     r <= (others => '0');
-	     g <= (others => '0');
-	     b <= (others => '0');
+		elsif	(column <= ball_x+to_unsigned(ball_size/2, 11) and column >= ball_x-to_unsigned(ball_size/2, 11) and row <= ball_y+to_unsigned(ball_size/2, 11) and row >= ball_y-to_unsigned(ball_size/2, 11)) then
+		  r <= (others => '1');
+		  g <= (others => '0');
+		  b <= (others => '0');
       end if;
-	 else
-	   r <= (others => '0');
-	   g <= (others => '0');
-	   b <= (others => '0');
     end if;
   end process;
 
 end nielsen;
-
