@@ -31,6 +31,7 @@ entity atlys_lab_video is
           reset : in  std_logic;
           up    : in  std_logic;
           down  : in  std_logic;
+			 speed : in  std_logic;
           tmds  : out std_logic_vector(3 downto 0);
           tmdsb : out std_logic_vector(3 downto 0)
   );
@@ -63,6 +64,7 @@ architecture nielsen of atlys_lab_video is
 			      reset       : in std_logic;
 				   up          : in std_logic;
 					down        : in std_logic;
+					speed       : in std_logic;
 					v_completed : in std_logic;
 					ball_x      : out unsigned(10 downto 0);
 					ball_y      : out unsigned(10 downto 0);
@@ -152,10 +154,11 @@ begin
 				
 	pong_control_top: pong_control
 	port map(
-	            clk => clk,
+	            clk => pixel_clk,
 			      reset => reset,
 				   up => up,
 					down => down,
+					speed => speed,
 					v_completed => v_completed_sig,
 					ball_x => ball_x,
 					ball_y => ball_y,

@@ -36,6 +36,7 @@ entity pong_control is
     reset       : in std_logic;
     up          : in std_logic;
     down        : in std_logic;
+	 speed       : in std_logic;
     v_completed : in std_logic;
     ball_x      : out unsigned(10 downto 0);
     ball_y      : out unsigned(10 downto 0);
@@ -46,12 +47,17 @@ end pong_control;
 architecture nielsen of pong_control is
     --TODO - required siganls
   type pong_state_type is
-      (moving, hit_top, hit_bottom, hit_right, hit_paddle, game_over);
+      (moving, hit_top, hit_bottom, hit_right, hit_paddle_top, hit_paddle_bottom, game_over);
+		
   signal speed_x_pos, speed_y_pos, speed_x_neg, speed_y_neg : unsigned(10 downto 0);
   signal speed_x_pos_next, speed_y_pos_next, speed_x_neg_next, speed_y_neg_next : unsigned(10 downto 0);
+  
   signal ball_x_internal, ball_y_internal, ball_x_next, ball_y_next : unsigned(10 downto 0);
+  
   signal paddle_y_internal, paddle_y_next : unsigned(10 downto 0); 
-  signal v_completed_count, v_completed_next : unsigned(10 downto 0);
+  
+  signal v_completed_count, v_completed_next, v_completed_count_ball, v_completed_next_ball : unsigned(10 downto 0);
+  
   signal ball, ball_next : pong_state_type;
 begin
     --process for handling changing states
@@ -71,23 +77,27 @@ begin
 	 
 	 
 	 --process for determining the next state
-	 process(ball, ball_next)
+	 process(ball, ball_next, ball_x_internal)
 	 begin
 	   ball_next <= ball;
 		  case ball is
 		    when moving =>
-			   if ball_x_internal = 20 then --or ball_x_internal >= width ) then
+			   if ball_x_internal <= 5 then --or ball_x_internal >= width ) then
 				  ball_next <= game_over;
-				elsif ball_x_internal >= width - 20 then
+				elsif ball_x_internal >= width - 5 then
 				  ball_next <= hit_right;
-				elsif ball_y_internal = 20 then--or ball_y_internal >= height) then
+				elsif ball_y_internal <= 5 then--or ball_y_internal >= height) then
 				  ball_next <= hit_top;
-				elsif ball_y_internal >= height - 20 then
+				elsif ball_y_internal >= height - 5 then
 				  ball_next <= hit_bottom;
---				elsif (ball_x_next = to_unsigned(paddle_width/2, 10) and 
---				       ball_y_next >= paddle_y_internal - to_unsigned(paddle_height/2, 10) and
---						 ball_y_next <= paddle_y_internal + to_unsigned(paddle_height/2, 10))then
---				  ball_next <= hit_paddle;
+				elsif ball_x_next <= to_unsigned(3*paddle_width/2, 10)+15 and 
+				      ball_y_next <= paddle_y_internal and
+				      ball_y_next >= paddle_y_internal - to_unsigned(paddle_height/2, 10) then
+				  ball_next <= hit_paddle_top;
+				elsif ball_x_next <= to_unsigned(3*paddle_width/2, 10)+15 and 
+				      ball_y_next > paddle_y_internal and
+				      ball_y_next <= paddle_y_internal + to_unsigned(paddle_height/2, 10) then
+				  ball_next <= hit_paddle_bottom;
 				else
 				  ball_next <= moving;
             end if;
@@ -97,25 +107,29 @@ begin
 			   ball_next <= moving;
 			 when hit_bottom =>
 			   ball_next <= moving;
-			 when hit_paddle =>
+			 when hit_paddle_top =>
+			   ball_next <= moving;
+		    when hit_paddle_bottom =>
 			   ball_next <= moving;
 			 when game_over =>
-			   ball_next <= moving;
+			   ball_next <= game_over;
 		  end case;
 	 end process;
 	 
+									
 	 process(clk, reset)
 	 begin
 	   if reset = '1' then
-		  v_completed_count <= (others => '0');
+		  v_completed_count_ball <= (others => '0');
 		elsif rising_edge(clk) then
-			v_completed_count <= v_completed_next;
+			v_completed_count_ball <= v_completed_next_ball;
 		end if;
 	 end process;
 	 
-	 v_completed_next <= 	(others => '0') when v_completed_count = 1500 else--speed
-									v_completed_count + 1 when v_completed = '1' else
-									v_completed_count;
+	 v_completed_next_ball <= 	(others => '0') when v_completed_count_ball = 400 and speed = '0' else--speed
+	                           (others => '0') when v_completed_count_ball = 600 and speed = '1' else--speed
+									   v_completed_count_ball + 1 when v_completed = '1' else
+									   v_completed_count_ball;
 									
 	 process(clk, reset)
 	 begin
@@ -137,33 +151,48 @@ begin
 	 end process;
 									
 	 ball_x_next <= 	"00000100001" when reset = '1' else
-	                  ball_x_internal + speed_x_pos - speed_x_neg when v_completed_count = 300 and ball_next = moving else						
+	                  ball_x_internal + speed_x_pos - speed_x_neg when v_completed_count_ball = 400 and speed = '0' and ball_next = moving else
+                     ball_x_internal + speed_x_pos - speed_x_neg when v_completed_count_ball = 600 and speed = '1' and ball_next = moving else							
 							ball_x_next;
 							
 	 ball_y_next <=	"00000100001" when reset = '1' else
-	                  ball_y_internal + speed_y_pos - speed_y_neg when  v_completed_count = 300 and ball_next = moving else
+	                  ball_y_internal + speed_y_pos - speed_y_neg when  v_completed_count_ball = 400 and speed = '0' and ball_next = moving else
+							ball_y_internal + speed_y_pos - speed_y_neg when  v_completed_count_ball = 600 and speed = '1' and ball_next = moving else
 	                  ball_y_next;
 
-	 speed_x_pos_next <= "00000000001" when reset = '1' or ball_next = game_over else
+	 speed_x_pos_next <= "00000000001" when reset = '1' or ball_next = hit_paddle_top or ball_next = hit_paddle_bottom else
 	                     speed_x_pos when ball_next = moving else
 	                     (others => '0') when ball_next = hit_right else
 	                     speed_x_pos;
 						 
-    speed_y_pos_next <= "00000000001" when reset = '1' or ball_next = hit_top else
-	                speed_y_pos when ball_next = moving else
-	                (others => '0') when ball_next = hit_bottom else
-	                speed_y_pos;
+    speed_y_pos_next <= "00000000001" when reset = '1' or ball_next = hit_top or ball_next = hit_paddle_bottom else
+	                     speed_y_pos when ball_next = moving else
+	                     (others => '0') when ball_next = hit_bottom or ball_next = hit_paddle_top else
+	                     speed_y_pos;
 	 
-	 speed_x_neg_next <= (others => '0') when reset = '1' or ball_next = game_over else
-	                speed_x_neg when ball_next = moving else
-	                "00000000001" when ball_next = hit_right else
-	                speed_x_neg;                     
+	 speed_x_neg_next <= (others => '0') when reset = '1' or ball_next = hit_paddle_top or ball_next = hit_paddle_bottom else
+	                     speed_x_neg when ball_next = moving else
+	                     "00000000001" when ball_next = hit_right else
+	                     speed_x_neg;                     
 						 
-    speed_y_neg_next <= (others => '0') when reset = '1' or ball_next = hit_top else
-	                speed_y_neg when ball_next = moving else
-	                "00000000001" when ball_next = hit_bottom else
-	                speed_y_neg;   
-
+    speed_y_neg_next <= (others => '0') when reset = '1' or ball_next = hit_top or ball_next = hit_paddle_bottom else
+	                     speed_y_neg when ball_next = moving else
+	                     "00000000001" when ball_next = hit_bottom or ball_next = hit_paddle_top else
+	                     speed_y_neg;   
+    --speed of ball
+	 process(clk, reset)
+	 begin
+	   if reset = '1' then
+		  v_completed_count <= (others => '0');
+		elsif rising_edge(clk) then
+			v_completed_count <= v_completed_next;
+		end if;
+	 end process;
+	 
+	 v_completed_next <= 	(others => '0') when v_completed_count = 200 else--speed
+									v_completed_count + 1 when v_completed = '1' else
+									v_completed_count;
+	 
 	 process(clk, reset)
 	 begin
 		if reset = '1' then
@@ -173,8 +202,8 @@ begin
 		end if;
 	 end process;
 	 
-	 paddle_y_next <= 	paddle_y_internal - 1 when up = '1' and v_completed_count = 300 and paddle_y_internal > to_unsigned(paddle_height/2, 10) else
-								paddle_y_internal + 1 when down = '1' and v_completed_count = 300 and paddle_y_internal < height-to_unsigned(paddle_height/2, 10)else
+	 paddle_y_next <= 	paddle_y_internal - 1 when up = '1' and v_completed_count = 200 and paddle_y_internal > to_unsigned(paddle_height/2, 10) else
+								paddle_y_internal + 1 when down = '1' and v_completed_count = 200 and paddle_y_internal < height-to_unsigned(paddle_height/2, 10)else
 								paddle_y_internal;
 
 end nielsen;

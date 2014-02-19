@@ -31,7 +31,9 @@ constant v_front_porch_pulse : natural := 10;
 constant v_sync_pulse_pulse : natural := 2;
 constant v_back_porch_pulse : natural := 33;
 
-constant paddle_height : natural := height/12;
+constant paddle_height : natural := height/6;
+constant paddle_width : natural := width/64;
+constant ball_size : natural := width/64;
 --constant unsigned_zero : unsigned := 0;
 
 -- constant <constant_name>		: time := <time_unit> ns;
